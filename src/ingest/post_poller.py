@@ -14,6 +14,7 @@ from ingest.constants import (
     DEFAULT_SUBREDDITS,
     FAST_POLL_INTERVAL_SEC,
     FAST_POLL_SUBREDDITS,
+    POLL_JITTER_SEC,
     POST_FETCH_LIMIT,
     SLOW_POLL_INTERVAL_SEC,
 )
@@ -26,8 +27,7 @@ logger = logging.getLogger(__name__)
 
 def poll_interval_sec(subreddit: str) -> float:
     base = FAST_POLL_INTERVAL_SEC if subreddit in FAST_POLL_SUBREDDITS else SLOW_POLL_INTERVAL_SEC
-    jitter = base * random.uniform(-0.1, 0.1)
-    return base + jitter
+    return base + random.uniform(0, POLL_JITTER_SEC)
 
 
 async def poll_subreddit_posts(
