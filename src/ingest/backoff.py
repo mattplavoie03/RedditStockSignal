@@ -8,11 +8,12 @@ import random
 from collections.abc import Awaitable, Callable
 from typing import TypeVar
 
-from asyncprawcore.exceptions import RequestException, ResponseException, ServerError, TooManyRequests
+from asyncprawcore.exceptions import Forbidden, RequestException, ResponseException, ServerError, TooManyRequests
 
 logger = logging.getLogger(__name__)
 
 RETRYABLE_EXCEPTIONS = (TooManyRequests, ServerError, RequestException)
+FORBIDDEN_BACKOFF_SEC = (300, 900, 3600)  # 5 min → 15 min → 60 min (cap)
 
 T = TypeVar("T")
 
@@ -25,12 +26,27 @@ async def with_backoff(
     max_delay_sec: float = 120.0,
     operation_name: str = "reddit request",
 ) -> T:
-    """Run an async operation with exponential backoff on transient failures."""
+    """Run an async operation with backoff on transient failures.
+
+    HTTP 403 (Forbidden) is treated as a temporary Reddit block: sleep with escalating
+    delays and retry indefinitely rather than crashing the process.
+    """
     attempt = 0
+    forbidden_blocks = 0
     while True:
         attempt += 1
         try:
             return await operation()
+        except Forbidden:
+            delay = FORBIDDEN_BACKOFF_SEC[min(forbidden_blocks, len(FORBIDDEN_BACKOFF_SEC) - 1)]
+            forbidden_blocks += 1
+            logger.error(
+                "Reddit 403 block on %s; sleeping %.0fs before retry (block #%s)",
+                operation_name,
+                delay,
+                forbidden_blocks,
+            )
+            await asyncio.sleep(delay)
         except RETRYABLE_EXCEPTIONS as exc:
             if attempt >= max_attempts:
                 logger.error("%s failed after %s attempts", operation_name, attempt)
@@ -46,6 +62,12 @@ async def with_backoff(
                 delay,
             )
             await asyncio.sleep(delay)
+
+
+def forbidden_backoff_delay(block_number: int) -> float:
+    """Return sleep duration for the Nth consecutive 403 block (1-indexed)."""
+    index = min(max(block_number, 1) - 1, len(FORBIDDEN_BACKOFF_SEC) - 1)
+    return float(FORBIDDEN_BACKOFF_SEC[index])
 
 
 def _compute_delay(

@@ -5,7 +5,9 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import random
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import asyncpraw
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -13,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from ingest.backoff import with_backoff
 from ingest.comments import fetch_comments_since, should_skip_comment
 from ingest.constants import (
+    POLL_JITTER_SEC,
     WSB_DAILY_DRAIN_IDLE_POLLS,
     WSB_DAILY_DRAINING_KEY,
     WSB_DAILY_MAX_DRAIN_HOURS,
@@ -61,7 +64,7 @@ async def run_wsb_daily_poller(
     while True:
         ingested = await _poll_once(reddit, session_factory, metrics, state)
         logger.info("WSB daily poll complete: %s new comments", ingested)
-        await asyncio.sleep(WSB_DAILY_POLL_INTERVAL_SEC)
+        await asyncio.sleep(WSB_DAILY_POLL_INTERVAL_SEC + random.uniform(0, POLL_JITTER_SEC))
 
 
 async def _poll_once(
@@ -115,6 +118,10 @@ async def _poll_thread_comments(
         return submission
 
     submission = await with_backoff(_load_submission, operation_name=f"load WSB thread {thread_id}")
+
+    if cursor_utc is None:
+        return await _initialize_cold_start_cursor(session, submission, thread_id)
+
     fetch_result = await with_backoff(
         lambda: fetch_comments_since(submission, cursor_utc, max_depth=2),
         operation_name=f"fetch WSB daily comments {thread_id}",
@@ -164,6 +171,39 @@ async def _poll_thread_comments(
         max_seen_utc if cursor_advanced else cursor_utc,
     )
     return ingested
+
+
+async def _initialize_cold_start_cursor(
+    session: AsyncSession,
+    submission: Any,
+    thread_id: str,
+) -> int:
+    """Skip pre-start backlog: set cursor to now and only collect new comments."""
+    await with_backoff(
+        lambda: submission.load(),
+        operation_name=f"load WSB thread metadata {thread_id}",
+    )
+    now = datetime.now(timezone.utc)
+    num_existing = submission.num_comments or 0
+    logger.info(
+        "WSB daily cold start for %s: skipping %s pre-start comments, cursor initialized to now",
+        thread_id,
+        num_existing,
+    )
+    await set_poller_state(session, wsb_daily_cursor_key(thread_id), now.isoformat())
+    await set_poller_state(session, wsb_daily_truncation_streak_key(thread_id), "0")
+
+    comments_in_db = await count_comments_for_post(session, thread_id)
+    await record_capture_stat(
+        session,
+        thread_id=thread_id,
+        num_comments_reported=num_existing,
+        comments_in_db_for_thread=comments_in_db,
+        fetched_this_cycle=0,
+        was_truncated=False,
+        polled_at=now,
+    )
+    return 0
 
 
 async def _update_cursor_for_thread(

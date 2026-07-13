@@ -31,3 +31,19 @@ def test_wsb_poll_state_keys() -> None:
 
 def test_wsb_polls_faster_than_other_subs() -> None:
     assert poll_interval_sec("wallstreetbets") < poll_interval_sec("stocks")
+
+
+def test_poll_intervals_include_jitter_but_stay_polite() -> None:
+    from ingest.constants import (
+        FAST_POLL_INTERVAL_SEC,
+        POLL_JITTER_SEC,
+        SLOW_POLL_INTERVAL_SEC,
+        WSB_DAILY_POLL_INTERVAL_SEC,
+    )
+
+    assert FAST_POLL_INTERVAL_SEC == 600
+    assert SLOW_POLL_INTERVAL_SEC == 900
+    assert WSB_DAILY_POLL_INTERVAL_SEC == 600
+    assert POLL_JITTER_SEC == 60
+    wsb = poll_interval_sec("wallstreetbets")
+    assert FAST_POLL_INTERVAL_SEC <= wsb <= FAST_POLL_INTERVAL_SEC + POLL_JITTER_SEC

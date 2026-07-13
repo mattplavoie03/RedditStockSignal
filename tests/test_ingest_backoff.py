@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from asyncprawcore.exceptions import ServerError, TooManyRequests
+from unittest.mock import AsyncMock, patch
+from asyncprawcore.exceptions import Forbidden, ServerError, TooManyRequests
 
-from ingest.backoff import _compute_delay, with_backoff
+from ingest.backoff import FORBIDDEN_BACKOFF_SEC, _compute_delay, forbidden_backoff_delay, with_backoff
 
 
 class FakeResponse:
@@ -43,3 +44,28 @@ async def test_with_backoff_raises_after_max_attempts() -> None:
 def test_compute_delay_honors_retry_after() -> None:
     exc = TooManyRequests(FakeResponse(retry_after="10"))
     assert _compute_delay(exc, attempt=1, base_delay_sec=1.0, max_delay_sec=120.0) == 10.0
+
+
+def test_forbidden_backoff_escalates_and_caps() -> None:
+    assert forbidden_backoff_delay(1) == FORBIDDEN_BACKOFF_SEC[0]
+    assert forbidden_backoff_delay(2) == FORBIDDEN_BACKOFF_SEC[1]
+    assert forbidden_backoff_delay(3) == FORBIDDEN_BACKOFF_SEC[2]
+    assert forbidden_backoff_delay(99) == FORBIDDEN_BACKOFF_SEC[2]
+
+
+@pytest.mark.asyncio
+async def test_with_backoff_retries_on_forbidden_without_crashing() -> None:
+    calls = 0
+
+    async def blocked_then_ok() -> str:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise Forbidden(FakeResponse(status=403))
+        return "ok"
+
+    with patch("ingest.backoff.asyncio.sleep", new=AsyncMock()):
+        result = await with_backoff(blocked_then_ok, operation_name="test")
+
+    assert result == "ok"
+    assert calls == 2
