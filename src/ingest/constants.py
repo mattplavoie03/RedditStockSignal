@@ -12,17 +12,18 @@ DEFAULT_SUBREDDITS = (
     "smallstreetbets",
 )
 
-FAST_POLL_INTERVAL_SEC = 150  # ~2.5 min for WSB
-SLOW_POLL_INTERVAL_SEC = 420  # ~7 min for other subs
+FAST_POLL_INTERVAL_SEC = 600  # ~10 min for WSB
+SLOW_POLL_INTERVAL_SEC = 900  # ~15 min for other subs
+POLL_JITTER_SEC = 60  # ±0–60s so requests aren't metronomic
 POST_FETCH_LIMIT = 100
 
-COMMENT_POLL_INTERVAL_SEC = 300  # scan every 5 min
+COMMENT_POLL_INTERVAL_SEC = 300  # scan for due 1h/24h passes
 COMMENT_PASS_1H_MIN = 55
 COMMENT_PASS_1H_MAX = 70
 COMMENT_PASS_24H_MIN = 23 * 60 + 30  # 23.5 h
 COMMENT_PASS_24H_MAX = 24 * 60 + 30  # 24.5 h
 
-WSB_DAILY_POLL_INTERVAL_SEC = 300  # ~5 min
+WSB_DAILY_POLL_INTERVAL_SEC = 600  # ~10 min
 REPLACE_MORE_LIMIT = 32
 REPLACE_MORE_MAX_BATCHES = 50
 WSB_COMMENT_LIMIT = 2048  # asyncpraw maximum per fetch
