@@ -1,0 +1,10 @@
+- Python 3.12, async-first. Use asyncpraw, never praw.
+- All DB access through SQLAlchemy async sessions; migrations via Alembic only.
+- Never hardcode credentials; read from environment via a single config module.
+- All timestamps stored as UTC. Store both created_utc (Reddit's) and ingested_at (ours).
+- Reddit API: respect rate limit headers, exponential backoff on 429/5xx,
+  descriptive user_agent from env.
+- Raw Reddit JSON is immutable once stored; extraction writes to separate tables
+  and must be re-runnable over history.
+- Every module gets a test. Ticker extraction changes require re-running
+  tests/fixtures/labeled_mentions.jsonl and reporting precision/recall.
