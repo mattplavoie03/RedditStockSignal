@@ -15,5 +15,15 @@ services:
       timeout: 5s
       retries: 5
 
+  ingest:
+    build: .
+    restart: always
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://reddit_signal:reddit_signal@db:5432/reddit_signal
+
 volumes:
   pgdata:

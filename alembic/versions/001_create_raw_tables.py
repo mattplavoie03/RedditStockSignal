@@ -39,7 +39,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("raw", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
+        sa.PrimaryKeyConstraint("id", "created_utc"),
     )
     op.create_table(
         "raw_comments",
@@ -57,7 +57,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("raw", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
+        sa.PrimaryKeyConstraint("id", "created_utc"),
     )
     op.create_index(
         "ix_raw_posts_subreddit_created_utc",

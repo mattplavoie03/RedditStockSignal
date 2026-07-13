@@ -21,6 +21,16 @@ uv run alembic upgrade head
 
 # Verify Reddit API auth
 uv run python scripts/reddit_smoke_test.py
+
+# Run ingestion locally
+uv run python scripts/run_ingest.py
+
+# Capture-rate scorecard for WSB daily thread
+uv run python scripts/capture_report.py 2026-07-13
+
+# Or run DB + ingest via Docker
+docker compose up -d
+docker compose run --rm ingest  # one-off; use `docker compose up -d` for persistent ingest
 ```
 
 ### Reddit app registration
