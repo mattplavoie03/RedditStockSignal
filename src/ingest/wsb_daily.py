@@ -147,7 +147,7 @@ async def _poll_thread_comments(
         truncated=fetch_result.truncated,
         max_seen_utc=max_seen_utc,
         num_comments=submission.num_comments,
-        fetched_count=len(fetch_result.comments),
+        fetched_count=fetch_result.raw_fetched_count,
         ingested=ingested,
     )
 
@@ -157,7 +157,7 @@ async def _poll_thread_comments(
         thread_id=thread_id,
         num_comments_reported=submission.num_comments,
         comments_in_db_for_thread=comments_in_db,
-        fetched_this_cycle=len(fetch_result.comments),
+        fetched_this_cycle=fetch_result.raw_fetched_count,
         was_truncated=fetch_result.truncated,
     )
 

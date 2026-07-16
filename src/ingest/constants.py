@@ -27,6 +27,9 @@ WSB_DAILY_POLL_INTERVAL_SEC = 600  # ~10 min
 REPLACE_MORE_LIMIT = 32
 REPLACE_MORE_MAX_BATCHES = 50
 WSB_COMMENT_LIMIT = 2048  # asyncpraw maximum per fetch
+# Expand replies under top-level comments this far older than the cursor.
+# sort=new only orders top-level; fresh replies sit under old parents all day.
+WSB_REPLY_GRACE_HOURS = 12
 
 WSB_DAILY_THREAD_KEY = "wsb_daily:thread_id"
 WSB_DAILY_DRAINING_KEY = "wsb_daily:draining"
