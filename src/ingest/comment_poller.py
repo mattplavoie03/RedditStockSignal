@@ -1,4 +1,8 @@
-"""Comment ingestion for regular (non-daily-thread) posts."""
+"""Comment ingestion for regular (non-daily-thread) posts.
+
+Deprecated: live Reddit API access was revoked July 2026. Prefer Arctic Shift
+archive dumps via ``archive.loader`` / ``scripts/load_archive.py``.
+"""
 
 from __future__ import annotations
 

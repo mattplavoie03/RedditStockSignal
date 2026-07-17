@@ -1,9 +1,12 @@
-- Python 3.12, async-first. Use asyncpraw, never praw.
+- Python 3.12, async-first. Prefer archive loaders over live Reddit API clients.
+- Live Reddit API pollers are deprecated (access revoked July 2026); ingest from
+  Arctic Shift JSONL/.zst dumps via `src/archive/loader.py` and
+  `scripts/load_archive.py`. Keep asyncpraw code for possible future access only.
 - All DB access through SQLAlchemy async sessions; migrations via Alembic only.
 - Never hardcode credentials; read from environment via a single config module.
 - All timestamps stored as UTC. Store both created_utc (Reddit's) and ingested_at (ours).
-- Reddit API: respect rate limit headers, exponential backoff on 429/5xx,
-  descriptive user_agent from env.
+- Archive `score` is as-of `retrieved_on` (in `raw`), not posting time — check
+  staleness before using as a point-in-time feature.
 - Raw Reddit JSON is immutable once stored; extraction writes to separate tables
   and must be re-runnable over history.
 - Every module gets a test. Ticker extraction changes require re-running

@@ -8,3 +8,6 @@ __pycache__/
 .ruff_cache/
 pgdata/
 .DS_Store
+ingest.log
+data/samples/*
+!data/samples/.gitkeep

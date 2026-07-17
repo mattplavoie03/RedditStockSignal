@@ -1,4 +1,8 @@
-"""Subreddit /new post poller."""
+"""Subreddit /new post poller.
+
+Deprecated: live Reddit API access was revoked July 2026. Prefer Arctic Shift
+archive dumps via ``archive.loader`` / ``scripts/load_archive.py``.
+"""
 
 from __future__ import annotations
 

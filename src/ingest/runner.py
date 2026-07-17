@@ -1,4 +1,8 @@
-"""Ingestion runner: coordinates all pollers."""
+"""Ingestion runner: coordinates all pollers.
+
+Deprecated: live Reddit API access was revoked July 2026. Prefer Arctic Shift
+archive dumps via ``archive.loader`` / ``scripts/load_archive.py``.
+"""
 
 from __future__ import annotations
 
