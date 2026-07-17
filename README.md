@@ -10,7 +10,7 @@ See [reddit-signal-plan.md](reddit-signal-plan.md) for the full build plan.
 # Install dependencies (requires uv: https://docs.astral.sh/uv/)
 uv sync
 
-# Copy env template and fill in Reddit credentials
+# Copy env template and fill in values
 cp .env.example .env
 
 # Start TimescaleDB
@@ -18,26 +18,28 @@ docker compose up -d
 
 # Run migrations
 uv run alembic upgrade head
-
-# Verify Reddit API auth
-uv run python scripts/reddit_smoke_test.py
-
-# Run ingestion locally
-uv run python scripts/run_ingest.py
-
-# Capture-rate scorecard for WSB daily thread
-uv run python scripts/capture_report.py 2026-07-13
-
-# Or run DB + ingest via Docker
-docker compose up -d
-docker compose run --rm ingest  # one-off; use `docker compose up -d` for persistent ingest
 ```
 
-### Reddit app registration
+## Data source (Arctic Shift archives)
 
-1. Go to https://www.reddit.com/prefs/apps and create a **script** app.
-2. Copy the client ID (under the app name) and secret into `.env`.
-3. Set `REDDIT_USER_AGENT` to `platform:reddit-signal:v0.1 (by /u/yourusername)`.
+Live Reddit API access is unavailable (client flagged; new-app registration is approval-gated as of July 2026). Ingestion is **archive-first** from [Arctic Shift](https://arctic-shift.photon-reddit.com/) dumps: JSONL (optionally `.zst`), one raw Reddit API payload object per line.
+
+```bash
+# Load comments or posts (kind auto-detects via presence of title)
+uv run python scripts/load_archive.py \
+  --files data/samples/r_smallstreetbets_comments.jsonl \
+  --subreddits wallstreetbets stocks pennystocks smallstreetbets
+```
+
+Supports plain `.jsonl` and zstandard-compressed `.zst` (streamed; never loaded whole-file into memory). Re-runs are idempotent (`INSERT … ON CONFLICT DO NOTHING`).
+
+### Archive caveats
+
+1. **Score is as-of `retrieved_on`, not posting time.** Do not use `score` as a point-in-time feature without checking `retrieved_on − created_utc` staleness (both fields are preserved in `raw`).
+2. **~10%+ of comments are `[removed]`/`[deleted]` with no body.** They produce no ticker mentions; because moderation targets spam/pumps, manipulation is slightly under-represented in the archive.
+3. **Deleted authors are stored as NULL** (`author == "[deleted]"`) and cannot contribute to unique-author counts.
+
+Live poller modules under `src/ingest/` remain in the tree but are deprecated.
 
 ## Development
 

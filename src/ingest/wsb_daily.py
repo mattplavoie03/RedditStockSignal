@@ -1,4 +1,8 @@
-"""Incremental poller for the WSB daily discussion thread."""
+"""Incremental poller for the WSB daily discussion thread.
+
+Deprecated: live Reddit API access was revoked July 2026. Prefer Arctic Shift
+archive dumps via ``archive.loader`` / ``scripts/load_archive.py``.
+"""
 
 from __future__ import annotations
 
