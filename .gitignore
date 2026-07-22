@@ -8,6 +8,7 @@ __pycache__/
 .ruff_cache/
 pgdata/
 .DS_Store
+.cursor/
 ingest.log
 data/*.log
 data/samples/*
