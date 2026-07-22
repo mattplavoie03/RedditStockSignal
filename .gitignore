@@ -9,5 +9,6 @@ __pycache__/
 pgdata/
 .DS_Store
 ingest.log
+data/*.log
 data/samples/*
 !data/samples/.gitkeep

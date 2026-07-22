@@ -77,7 +77,23 @@ def detect_kind(obj: dict[str, Any]) -> ResolvedKind:
 def archive_author(value: Any) -> str | None:
     if value is None or value == "[deleted]":
         return None
-    return str(value)
+    return strip_null_bytes(str(value))
+
+
+def strip_null_bytes(value: str) -> str:
+    """Postgres text/JSONB reject U+0000; Arctic Shift dumps occasionally contain it."""
+    return value.replace("\x00", "")
+
+
+def sanitize_for_postgres(value: Any) -> Any:
+    """Recursively strip null bytes from strings (mapped fields and ``raw`` JSON)."""
+    if isinstance(value, str):
+        return strip_null_bytes(value)
+    if isinstance(value, dict):
+        return {str(k): sanitize_for_postgres(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [sanitize_for_postgres(v) for v in value]
+    return value
 
 
 def fullname_id(obj: dict[str, Any], kind: ResolvedKind) -> str:
@@ -99,29 +115,32 @@ def map_comment(obj: dict[str, Any]) -> dict[str, Any]:
     link_id = obj.get("link_id")
     if not link_id:
         raise ValueError("comment missing link_id")
+    body = obj.get("body")
     return {
         "id": fullname_id(obj, "comments"),
-        "post_id": str(link_id),
-        "subreddit": str(obj.get("subreddit", "")).lower(),
+        "post_id": strip_null_bytes(str(link_id)),
+        "subreddit": strip_null_bytes(str(obj.get("subreddit", "")).lower()),
         "author": archive_author(obj.get("author")),
-        "body": obj.get("body"),
+        "body": strip_null_bytes(body) if isinstance(body, str) else body,
         "score": obj.get("score"),
         "created_utc": utc_from_reddit(float(obj["created_utc"])),
-        "raw": obj,
+        "raw": sanitize_for_postgres(obj),
     }
 
 
 def map_post(obj: dict[str, Any]) -> dict[str, Any]:
+    title = obj.get("title")
+    selftext = obj.get("selftext")
     return {
         "id": fullname_id(obj, "posts"),
-        "subreddit": str(obj.get("subreddit", "")).lower(),
+        "subreddit": strip_null_bytes(str(obj.get("subreddit", "")).lower()),
         "author": archive_author(obj.get("author")),
-        "title": obj.get("title"),
-        "selftext": obj.get("selftext"),
+        "title": strip_null_bytes(title) if isinstance(title, str) else title,
+        "selftext": strip_null_bytes(selftext) if isinstance(selftext, str) else selftext,
         "score": obj.get("score"),
         "num_comments": obj.get("num_comments"),
         "created_utc": utc_from_reddit(float(obj["created_utc"])),
-        "raw": obj,
+        "raw": sanitize_for_postgres(obj),
     }
 
 

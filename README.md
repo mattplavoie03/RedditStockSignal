@@ -41,6 +41,26 @@ Supports plain `.jsonl` and zstandard-compressed `.zst` (streamed; never loaded 
 
 Live poller modules under `src/ingest/` remain in the tree but are deprecated.
 
+## TimescaleDB compression
+
+`raw_posts` and `raw_comments` use native compression (`segmentby=subreddit`, `orderby=created_utc DESC`) with a policy that compresses chunks older than 7 days.
+
+```bash
+# Compression settings (should list both hypertables)
+docker compose exec -T db psql -U reddit_signal -d reddit_signal -c \
+  "SELECT * FROM timescaledb_information.compression_settings;"
+
+# Per-chunk compression status
+docker compose exec -T db psql -U reddit_signal -d reddit_signal -c \
+  "SELECT * FROM chunk_compression_stats('raw_comments');"
+
+# Force-compress existing chunks (e.g. after a bulk archive load)
+docker compose exec -T db psql -U reddit_signal -d reddit_signal -c \
+  "SELECT compress_chunk(c, true) FROM show_chunks('raw_comments') c;"
+docker compose exec -T db psql -U reddit_signal -d reddit_signal -c \
+  "SELECT compress_chunk(c, true) FROM show_chunks('raw_posts') c;"
+```
+
 ## Development
 
 ```bash

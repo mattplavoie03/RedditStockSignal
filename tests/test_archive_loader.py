@@ -84,6 +84,24 @@ def test_map_comment_removed_body_preserved() -> None:
     assert row["body"] == "[removed]"
 
 
+def test_map_strips_null_bytes_for_postgres() -> None:
+    obj = {
+        "name": "t1_nul",
+        "id": "nul",
+        "link_id": "t3_x",
+        "subreddit": "pennystocks",
+        "author": "trader",
+        "body": "bad\x00null",
+        "score": 1,
+        "created_utc": 1733273084,
+        "extra": {"note": "also\x00here"},
+    }
+    row = map_comment(obj)
+    assert row["body"] == "badnull"
+    assert "\x00" not in row["raw"]["body"]
+    assert row["raw"]["extra"]["note"] == "alsohere"
+
+
 def test_map_post_fields() -> None:
     obj = {
         "name": "t3_post1",
@@ -103,7 +121,8 @@ def test_map_post_fields() -> None:
     assert row["selftext"] == "long form"
     assert row["num_comments"] == 7
     assert row["score"] == 42
-    assert row["raw"] is obj
+    assert row["raw"]["title"] == "DD on XYZ"
+    assert row["raw"] is not obj
 
 
 def test_matches_filters_subreddit_and_date() -> None:
