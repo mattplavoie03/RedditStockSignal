@@ -12,5 +12,17 @@ pgdata/
 reddit-signal-plan.md
 ingest.log
 data/*.log
+data/corpus_ticker_candidates.csv
+data/candidates_confirmed.csv
+data/candidates_not_found.csv
+data/candidates_ambiguous.csv
+data/candidates_crypto.csv
+data/candidates_review_foreign.csv
+data/candidates_stoplist.csv
+data/candidates_alias.csv
+data/candidates_review.csv
+data/candidates_unrecognized.csv
+data/candidates_foreign_dropped.csv
+data/cache/
 data/samples/*
 !data/samples/.gitkeep

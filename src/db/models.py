@@ -72,3 +72,27 @@ class WsbCaptureStats(Base):
     comments_in_db_for_thread: Mapped[int] = mapped_column(Integer, nullable=False)
     fetched_this_cycle: Mapped[int] = mapped_column(Integer, nullable=False)
     was_truncated: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+
+class Ticker(Base):
+    __tablename__ = "tickers"
+
+    symbol: Mapped[str] = mapped_column(Text, primary_key=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    exchange: Mapped[str | None] = mapped_column(Text)
+    is_etf: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    ticker_source: Mapped[str] = mapped_column(Text, nullable=False, default="nasdaq_current")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class TickerName(Base):
+    __tablename__ = "ticker_names"
+
+    normalized_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    symbol: Mapped[str] = mapped_column(Text, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )

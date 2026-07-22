@@ -15,4 +15,11 @@ def test_raw_comment_table_name() -> None:
 
 def test_models_registered_on_base() -> None:
     tables = set(Base.metadata.tables)
-    assert tables == {"raw_posts", "raw_comments", "poller_state", "wsb_capture_stats"}
+    assert tables == {
+        "raw_posts",
+        "raw_comments",
+        "poller_state",
+        "wsb_capture_stats",
+        "tickers",
+        "ticker_names",
+    }
