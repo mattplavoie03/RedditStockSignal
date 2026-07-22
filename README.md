@@ -2,8 +2,6 @@
 
 Reddit-based stock discovery: ingest posts/comments from finance subreddits, extract ticker mentions, detect anomalous mention velocity, and backtest predictive value.
 
-See [reddit-signal-plan.md](reddit-signal-plan.md) for the full build plan.
-
 ## Setup
 
 ```bash

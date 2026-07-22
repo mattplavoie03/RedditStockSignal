@@ -9,6 +9,7 @@ __pycache__/
 pgdata/
 .DS_Store
 .cursor/
+reddit-signal-plan.md
 ingest.log
 data/*.log
 data/samples/*
